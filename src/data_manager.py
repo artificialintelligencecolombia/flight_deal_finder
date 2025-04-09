@@ -5,7 +5,7 @@ import requests
 load_dotenv() # loads environment variables from .env file
 
 class DataManager:
-    def __init__(self):
+    def __init__(self) -> None:
         """Reads the base Sheety API URL and token. Prepares authorization headers. Initializes two empty data dicts. Validates that required environment variables exist."""
         self.base_url = os.getenv("BASE_SHEETY_URL")
         self.auth_token = os.getenv("SHEETY_AUTH_TOKEN")
@@ -29,32 +29,21 @@ class DataManager:
         except requests.exceptions.HTTPError as e:
             raise RuntimeError(f"Error fetching data: {e}") from e
         
-    def update_destination_codes(self) -> str:
+    def update_destination_code(self, row_id, iata_code) -> None:
         """Iterates through the destination_data object(?)."""
-        for city in self.destination_data["sheet1"]:
-            row_id = city['id']
+        new_data = {
+            "sheet1": {
+                "iataCode": iata_code
+            }
+        }
+    
+        try:
+            put_url = f"{self.base_url}/{row_id}"  # Build PUT request URL
+            put_response = requests.put(url=put_url, headers=self.headers, json=new_data)
+            put_response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            raise RuntimeError(f"Error updating data: {e}")
             
-            # Check if IATA code is empty
-            if city['iataCode'] == '':
-                new_data = {
-                    "sheet1": {
-                        "iataCode": "TESTING"
-                    }
-                }
-            
-                try:
-                    put_url = f"{self.base_url}/{row_id}"  # Build PUT request URL
-                    put_response = requests.put(url=put_url, headers=self.headers, json=new_data)
-                    put_response.raise_for_status()
-                except requests.exceptions.HTTPError as e:
-                    raise RuntimeError(f"Error updating data: {e}")
-            
-            
-if __name__ == "__main__":
-        data_manager = DataManager()
-        data = data_manager.get_data()
-        data_manager.update_destination_codes()
-        
         
 
 
